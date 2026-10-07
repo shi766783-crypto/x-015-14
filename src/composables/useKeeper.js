@@ -1,6 +1,7 @@
 import { computed, reactive } from 'vue'
 import { createStorage } from '../services/storage'
 import { config, seed } from '../data'
+import { achievementDefs, buildStats } from '../achievements'
 
 const storage = createStorage(config.storageKey, seed)
 export function useKeeper() {
@@ -11,5 +12,7 @@ export function useKeeper() {
   const remove = (collection, id) => { state[collection] = state[collection].filter((entry) => entry.id !== id); persist() }
   const reset = () => { Object.assign(state, structuredClone(seed)); persist() }
   const metrics = computed(() => config.metrics.map((metric) => ({ ...metric, value: metric.value ? metric.value(state) : state[metric.collection]?.length || 0 })))
-  return { state, add, update, remove, reset, persist, metrics }
+  const cookStats = computed(() => buildStats(state))
+  const badges = computed(() => achievementDefs.map((def) => ({ ...def, unlocked: def.test(cookStats.value) })))
+  return { state, add, update, remove, reset, persist, metrics, cookStats, badges }
 }
